@@ -1,0 +1,9 @@
+libs =
+import libs += liblsp-boot%lib{lsp-boot}
+
+exe{build2-lsp-server}: {hxx mxx cxx}{**} $libs testscript
+
+cxx.poptions =+ "-I$src_root"
+
+if $config.build2_lsp_server.enable_import_std
+  cxx.poptions += -DBUILD2_LSP_SERVER_ENABLE_IMPORT_STD

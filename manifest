@@ -1,0 +1,13 @@
+: 1
+name: build2-lsp-server
+version: 0.1.0-a.0.z
+language: c++
+summary: build2 LSP server
+license: MIT
+description-file: README.md
+url: https://example.org/build2-lsp-server
+email: cjangus@gmail.com
+depends: * build2 >= 0.16.0
+depends: * bpkg >= 0.16.0
+depends: liblsp-boot
+depends: libboost-json

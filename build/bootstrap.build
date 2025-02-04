@@ -1,0 +1,7 @@
+project = build2-lsp-server
+
+using version
+using config
+using test
+using install
+using dist
