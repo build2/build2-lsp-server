@@ -11,6 +11,7 @@ import std;
 
 export module server_impl;
 
+import tracked_document;
 import lsp_boot;
 
 namespace b2lsp
@@ -48,6 +49,9 @@ namespace b2lsp
 
 		auto pump() -> void;
 
+		using DocumentMap = std::unordered_map< lsp_boot::lsp::DocumentURI, TrackedDocument >;
+
 		std::function< void(lsp_boot::lsp::RawMessage&&) > send_notify_;
+		DocumentMap documents_;
 	};
 }

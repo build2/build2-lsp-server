@@ -56,10 +56,23 @@ namespace b2lsp
 		auto const& text_doc = params.at(lsp::keys::text_document).as_object();
 		auto const uri = boost::json::value_to< lsp::DocumentURI >(text_doc.at(lsp::keys::uri));
 
+		auto const doc_iter = documents_.find(uri);
+		if (doc_iter != documents_.end())
+		{
+			// already exists
+			return temp_fail;
+		}
+
 		auto text = boost::json::value_to< lsp::DocumentContent >(text_doc.at(lsp::keys::text));
-
-
-		return result_ok;
+		if (auto doc = create_tracked_document(uri, std::move(text)); doc.has_value())
+		{
+			documents_.try_emplace(uri, std::move(*doc));
+			return result_ok;
+		}
+		else
+		{
+			return temp_fail;
+		}
 	}
 
 	auto ServerImplementation::operator() (notifications::DidChangeTextDocument&& msg) -> NotificationResult
@@ -70,7 +83,29 @@ namespace b2lsp
 		auto const& changes = params.at(lsp::keys::content_changes).as_array();
 
 		auto const uri = boost::json::value_to< std::string >(text_doc_id.at(lsp::keys::uri));
-		
+
+		auto const doc_iter = documents_.find(uri);
+		if (doc_iter == documents_.end())
+		{
+			// not tracked
+			return temp_fail;
+		}
+
+		auto& doc = doc_iter->second;
+
+		for (auto&& entry : changes)
+		{
+			auto&& change = entry.as_object();
+
+			if (change.contains(lsp::keys::range))
+			{
+				// @todo: delta handling
+				continue;
+			}
+
+			update_document(doc, boost::json::value_to< std::string >(change.at(lsp::keys::text)));
+		}
+
 		return result_ok;
 	}
 
@@ -82,6 +117,14 @@ namespace b2lsp
 
 		auto const uri = boost::json::value_to< std::string >(text_doc_id.at(lsp::keys::uri));
 
+		auto const doc_iter = documents_.find(uri);
+		if (doc_iter == documents_.end())
+		{
+			// not tracked
+			return temp_fail;
+		}
+
+		documents_.erase(doc_iter);
 		return result_ok;
 	}
 
@@ -90,11 +133,13 @@ namespace b2lsp
 		auto&& params = msg.params();
 
 		auto const& text_doc_id = boost::json::value_to< std::string >(params.at(lsp::keys::text_document).at(lsp::keys::uri));
+		auto const doc_iter = documents_.find(text_doc_id);
+		if (doc_iter == documents_.end())
+		{
+			return temp_fail;
+		}
 
-		auto result = boost::json::object{
-			// @todo: resultId for deltas: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#semanticTokensLegend
-			{ "data", boost::json::array() },
-		};
-		return result;
+		auto const& doc = doc_iter->second;
+		return invoke_on_document(doc, msg);
 	}	
 }
