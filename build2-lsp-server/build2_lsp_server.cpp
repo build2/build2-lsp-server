@@ -1,7 +1,9 @@
 
+#ifdef _WIN64
 #include <fcntl.h>
 #include <io.h>
 #include <stdio.h>
+#endif
 
 import lsp_boot;
 import server_impl;
@@ -18,7 +20,8 @@ using namespace b2lsp;
 
 int main(int argc, char* argv[])
 {
-	// @note: apparently the std library will auto-normalize line endings, removing \r. 
+#ifdef _WIN64
+	// @note: apparently the std library will auto-normalize line endings, removing \r.
 	{
 		auto res = _setmode(_fileno(stdin), _O_BINARY);
 		if (res == -1)
@@ -35,6 +38,7 @@ int main(int argc, char* argv[])
 			return res;
 		}
 	}
+#endif
 
 	auto input_queue = lsp_boot::PendingInputQueue{};
 	auto output_queue = lsp_boot::OutputQueue{};
