@@ -5,17 +5,20 @@
 #include <stdio.h>
 #endif
 
-import lsp_boot;
-import server_impl;
-
-#if defined(BUILD2_LSP_SERVER_ENABLE_IMPORT_STD)
-import std;
-#else
+#if !defined(BUILD2_LSP_SERVER_ENABLE_IMPORT_STD)
 #include <memory>
 #include <iostream>
 #include <thread>
 #endif
 #include <version>
+
+import server_impl;
+
+import lsp_boot;
+
+#if defined(BUILD2_LSP_SERVER_ENABLE_IMPORT_STD)
+import std;
+#endif
 
 using namespace b2lsp;
 
