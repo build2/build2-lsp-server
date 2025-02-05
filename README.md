@@ -36,4 +36,4 @@ Current lack of LSP conformance aside, the server should in theory be usable in 
 
 ## Integrations
 
-- [VS Code client extension](https://github.com/kamrann/build2-vscode)
+- [VS Code client extension](https://github.com/build2/build2-vscode)
