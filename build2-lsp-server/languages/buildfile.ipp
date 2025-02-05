@@ -13,8 +13,10 @@ module;
 
 export module lang.buildfile;
 
-import lsp_boot;
 import tracked_document_data;
+
+import lsp_boot;
+import lsp_boot.ext_mod_wrap.boost.json;
 
 #if defined(BUILD2_LSP_SERVER_ENABLE_IMPORT_STD)
 import std;

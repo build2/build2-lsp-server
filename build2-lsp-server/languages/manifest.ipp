@@ -1,9 +1,7 @@
 
 module;
 
-#if defined(BUILD2_LSP_SERVER_ENABLE_IMPORT_STD)
-import std;
-#else
+#if !defined(BUILD2_LSP_SERVER_ENABLE_IMPORT_STD)
 #include <cstddef>
 #include <tuple>
 #include <string_view>
@@ -17,6 +15,10 @@ import tracked_document_data;
 
 import lsp_boot;
 import lsp_boot.ext_mod_wrap.boost.json;
+
+#if defined(BUILD2_LSP_SERVER_ENABLE_IMPORT_STD)
+import std;
+#endif
 
 namespace b2lsp
 {

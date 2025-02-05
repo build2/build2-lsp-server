@@ -15,8 +15,15 @@ import std;
 #include <iostream>
 #include <thread>
 #endif
+#include <version>
 
 using namespace b2lsp;
+
+#if defined(__cpp_lib_jthread)
+using Thread = std::jthread;
+#else
+using Thread = std::thread;
+#endif
 
 int main(int argc, char* argv[])
 {
@@ -48,7 +55,7 @@ int main(int argc, char* argv[])
 		};
 
 	auto server = lsp_boot::Server(input_queue, output_queue, server_impl_init);
-	auto server_thread = std::jthread([&] {
+	auto server_thread = Thread([&] {
 		server.run();
 		});
 
