@@ -7,4 +7,4 @@ location: https://pkg.cppget.org/1/stable
 
 :
 role: prerequisite
-location: ssh://git@bitbucket.org/kamrann/lsp-boot.git#main
+location: https://github.com/kamrann/lsp-boot.git#main
