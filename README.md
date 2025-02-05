@@ -1,44 +1,21 @@
-# build2-lsp-server - An executable
+# build2-lsp-server - An LSP server for the build2 toolchain
 
-The `build2-lsp-server` executable is a <SUMMARY-OF-FUNCTIONALITY>.
+## Status
 
-Note that the `build2-lsp-server` executable in this package provides `build2` metadata.
+Very early alpha. Be warned.
+Far from conformant with LSP spec.
 
+## Features
+
+### Syntax Highlighting (Semantic Tokens)
+
+Naive tokenization implementation for `buildfile` and `manifest`.
+Regarding `buildfile`, decision regarding parsing approach so far deferred. See [discussion here](https://github.com/build2/build2/issues/109).
 
 ## Usage
 
-To start using `build2-lsp-server` in your project, add the following build-time
-`depends` value to your `manifest`, adjusting the version constraint as
-appropriate:
+Current lack of LSP conformance aside, the server should in theory be usable in any LSP-enabled context.
 
-```
-depends: * build2-lsp-server ^<VERSION>
-```
+## Integrations
 
-Then import the executable in your `buildfile`:
-
-```
-import! [metadata] <TARGET> = build2-lsp-server%exe{<TARGET>}
-```
-
-
-## Importable targets
-
-This package provides the following importable targets:
-
-```
-exe{<TARGET>}
-```
-
-<DESCRIPTION-OF-IMPORTABLE-TARGETS>
-
-
-## Configuration variables
-
-This package provides the following configuration variables:
-
-```
-[bool] config.build2_lsp_server.<VARIABLE> ?= false
-```
-
-<DESCRIPTION-OF-CONFIG-VARIABLES>
+- [VS Code client extension](https://github.com/kamrann/build2-vscode)
