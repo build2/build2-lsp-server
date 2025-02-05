@@ -8,12 +8,14 @@ module;
 #include <string_view>
 #include <vector>
 #include <ranges>
+#include <algorithm>
 #include <regex>
 #endif
 
 export module lang.buildfile;
 
 import tracked_document_data;
+import utility;
 
 import lsp_boot;
 import lsp_boot.ext_mod_wrap.boost.json;
@@ -189,10 +191,19 @@ namespace b2lsp
 					| std::ranges::to< std::vector >();
 				};
 
-			auto tokens = content()
+			// @todo: pending libcpp enumerate
+			
+			//auto tokens = content()
+			//	| std::views::split("\n"sv)
+			//	| std::views::transform(line_tokens)
+			//	| std::views::enumerate
+			//	| std::views::transform(to_tuples)
+			//	| std::views::join;
+
+			auto tokens = enumerate_workaround(content()
 				| std::views::split("\n"sv)
 				| std::views::transform(line_tokens)
-				| std::views::enumerate
+				)
 				| std::views::transform(to_tuples)
 				| std::views::join;
 
