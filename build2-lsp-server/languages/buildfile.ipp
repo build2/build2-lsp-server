@@ -10,12 +10,13 @@ import std;
 export module lang.buildfile;
 
 import lsp_boot;
+import tracked_document_data;
 
 namespace b2lsp
 {
 	using namespace std::string_view_literals;
 
-	export struct BuildfileImplementation
+	export struct BuildfileDocument : TrackedDocumentData
 	{
 		static constexpr auto supports_uri(std::string_view const uri) -> bool
 		{
@@ -27,7 +28,9 @@ namespace b2lsp
 				|| uri.ends_with(".build2"sv);
 		}
 
-		static auto handle(lsp_boot::lsp::requests::SemanticTokens const& msg) -> lsp_boot::Server::RequestResult
+		using TrackedDocumentData::TrackedDocumentData;
+
+		auto handle(lsp_boot::lsp::requests::SemanticTokens const& msg) const -> lsp_boot::Server::RequestResult
 		{
 			return {};
 		}

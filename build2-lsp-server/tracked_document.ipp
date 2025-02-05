@@ -6,6 +6,7 @@ import std;
 #else
 #include <utility>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <variant>
 #include <optional>
@@ -13,39 +14,32 @@ import std;
 
 export module tracked_document;
 
+import tracked_document_data;
 import lang.manifest;
 import lang.buildfile;
 
 namespace b2lsp
 {
-	export struct TrackedDocumentData
-	{
-		TrackedDocumentData(std::string content) : content_{ std::move(content) }
-		{
-		}
+	//export template < typename Impl >
+	//struct TaggedDocument : TrackedDocumentData
+	//{
+	//	using TrackedDocumentData::TrackedDocumentData;
+	//};
 
-		auto update_content(std::string new_content) -> void
-		{
-			content_ = std::move(new_content);
-		}
-
-		std::string content_;
-	};
-
-	export template < typename Impl >
-	struct TaggedDocument : TrackedDocumentData
-	{
-		using TrackedDocumentData::TrackedDocumentData;
-	};
+	//export using ManifestDocument = TaggedDocument< ManifestImplementation >;
+	//export using BuildfileDocument = TaggedDocument< BuildfileImplementation >;
 
 	export using TrackedDocument = std::variant<
-		TaggedDocument< ManifestImplementation >,
-		TaggedDocument< BuildfileImplementation >
+		ManifestDocument,
+		BuildfileDocument
 	>;
 
 	export auto create_tracked_document(std::string_view const uri, std::string content) -> std::optional< TrackedDocument >
 	{
-		using LangTuple = std::tuple< ManifestImplementation, BuildfileImplementation >;
+		using LangTuple = std::tuple<
+			std::in_place_type_t< ManifestDocument >,
+			std::in_place_type_t< BuildfileDocument >
+			>;
 
 		// Grab first matching implementation based on uri
 
@@ -53,7 +47,7 @@ namespace b2lsp
 		auto const select = [&]< typename Impl >(std::in_place_type_t< Impl >) -> bool {
 			if (!doc && Impl::supports_uri(uri))
 			{
-				doc.emplace< TaggedDocument< Impl > >(std::move(content));
+				doc.emplace< Impl >(std::move(content));
 				return true;
 			}
 			else
@@ -62,14 +56,14 @@ namespace b2lsp
 			}
 		};
 		std::apply([&]< typename... Impls >(Impls...) {
-			(select(std::in_place_type< Impls >) || ...);
+			(select(Impls{}) || ...);
 			}, LangTuple{});
 		return doc;
 	}
 
 	export auto update_document(TrackedDocument& doc, std::string new_content)
 	{
-		return std::visit([&]< typename Impl >(TaggedDocument< Impl >& doc) {
+		return std::visit([&]< typename Impl >(Impl& doc) {
 			doc.update_content(std::move(new_content));
 		}, doc);
 	}
@@ -77,8 +71,8 @@ namespace b2lsp
 	export template < typename Operation >
 	auto invoke_on_document(TrackedDocument const& doc, Operation&& op)
 	{
-		return std::visit([&]< typename Impl >(TaggedDocument< Impl > const& doc) {
-			return Impl::handle(std::forward< Operation >(op));
+		return std::visit([&]< typename Impl >(Impl const& doc) {
+			return doc.handle(std::forward< Operation >(op));
 		}, doc);
 	}
 }

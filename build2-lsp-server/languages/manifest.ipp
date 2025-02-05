@@ -10,20 +10,24 @@ import std;
 
 export module lang.manifest;
 
+import tracked_document_data;
+
 import lsp_boot;
 
 namespace b2lsp
 {
 	using namespace std::string_view_literals;
 
-	export struct ManifestImplementation
+	export struct ManifestDocument : TrackedDocumentData
 	{
 		static constexpr auto supports_uri(std::string_view const uri) -> bool
 		{
 			return uri.ends_with("manifest"sv);
 		}
 
-		static auto handle(lsp_boot::lsp::requests::SemanticTokens const& msg) -> lsp_boot::Server::RequestResult
+		using TrackedDocumentData::TrackedDocumentData;
+
+		auto handle(lsp_boot::lsp::requests::SemanticTokens const& msg) const -> lsp_boot::Server::RequestResult
 		{
 			auto tokens = boost::json::array{};
 
