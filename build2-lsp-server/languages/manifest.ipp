@@ -85,7 +85,7 @@ namespace b2lsp
 			//	| std::views::join;
 
 			auto tokens = enumerate_workaround(content()
-				| std::views::split("\n"sv)
+				| std::views::split("\r\n"sv)
 				| std::views::transform(line_tokens)
 				)
 				| std::views::transform(to_tuples)
