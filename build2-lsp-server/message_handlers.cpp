@@ -42,7 +42,11 @@ namespace b2lsp
 		auto result = boost::json::object{
 			{ lsp::keys::capabilities, {
 				{ "textDocumentSync", 1 }, // @todo: incremental support
-				{ "semanticTokensProvider", { { "legend", semantic_tokens_legend }, { "full", true } } }, // @todo: implement delta support
+				{ "semanticTokensProvider", {
+					{ "legend", semantic_tokens_legend },
+					{ "range", true },
+					{ "full", true }, //{ "delta", false } },
+				} }, // @todo: implement delta support
 				} },
 		};
 
