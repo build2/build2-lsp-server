@@ -1,6 +1,8 @@
 
 module;
 
+#include <boost/json/value_to.hpp>
+
 #if !defined(BUILD2_LSP_SERVER_ENABLE_IMPORT_STD)
 #include <cstddef>
 #include <cstdint>
@@ -15,6 +17,7 @@ module;
 
 module lang.buildfile;
 
+import lang.common.semantic_tokens;
 import utility;
 
 import lsp_boot;
@@ -29,20 +32,10 @@ namespace b2lsp
 {
 	using namespace std::string_view_literals;
 
-	auto BuildfileDocument::handle(lsp_boot::lsp::requests::SemanticTokens const& msg) const -> lsp_boot::Server::RequestResult
+	auto BuildfileDocument::generate_semantic_tokens_for_range(lsp_boot::lsp::Range const range) const -> std::vector< unsigned int >
 	{
-		struct LineToken
-		{
-			std::size_t line_char_offset;
-			std::size_t length;
-			lsp_boot::lsp::SemanticTokenType type;
-			std::uint32_t mods = 0;
-		};
-
-		using LineTokenList = std::vector< LineToken >;
-
-		static constexpr auto line_tokens = [](std::ranges::contiguous_range auto&& rg) {
-			auto line = std::string_view(rg);
+		static constexpr auto line_tokens = [](auto const& line_tuple) {
+			auto [line_index, line] = std::pair< std::size_t, std::string_view >{ line_tuple };
 			LineTokenList tokens;
 
 			// Very naive, minimal tokenization. Pending decision on parsing approach.
@@ -50,7 +43,7 @@ namespace b2lsp
 			std::optional< LineToken > trailing_comment;
 			if (auto const hash = line.find('#'); hash != std::string_view::npos)
 			{
-				trailing_comment.emplace(hash, line.length() - hash, lsp_boot::lsp::SemanticTokenType::comment);
+				trailing_comment.emplace(line_index, hash, line.length() - hash, lsp_boot::lsp::SemanticTokenType::comment);
 				line = line.substr(0, hash);
 			}
 
@@ -130,7 +123,7 @@ namespace b2lsp
 				{
 					auto const end = line.find(*quote, 1); // @note: doesn't handle escaping
 					auto const str_literal = line.substr(0, end == std::string_view::npos ? end : (end + 1));
-					tokens.emplace_back(base, str_literal.length(), lsp_boot::lsp::SemanticTokenType::string);
+					tokens.emplace_back(line_index, base, str_literal.length(), lsp_boot::lsp::SemanticTokenType::string);
 					line = line.substr(str_literal.length());
 					base += str_literal.length();
 				}
@@ -145,11 +138,11 @@ namespace b2lsp
 						{
 							if (std::ranges::contains(keywords, matched))
 							{
-								tokens.emplace_back(base, mlen, lsp_boot::lsp::SemanticTokenType::keyword);
+								tokens.emplace_back(line_index, base, mlen, lsp_boot::lsp::SemanticTokenType::keyword);
 							}
 							else if (std::ranges::contains(types, matched))
 							{
-								tokens.emplace_back(base, mlen, lsp_boot::lsp::SemanticTokenType::type);
+								tokens.emplace_back(line_index, base, mlen, lsp_boot::lsp::SemanticTokenType::type);
 							}
 						}
 
@@ -163,7 +156,7 @@ namespace b2lsp
 					}
 				}
 			}
-				
+
 			if (trailing_comment.has_value())
 			{
 				tokens.push_back(*trailing_comment);
@@ -172,32 +165,40 @@ namespace b2lsp
 			return tokens;
 			};
 
-		static constexpr auto to_tuples = [](auto const& indexed_tk_list) {
-			auto const& [line, tokens] = indexed_tk_list;
-			return tokens
-				| std::views::transform([line](auto const& tk) { return std::tuple{ line, tk.line_char_offset, tk.length, tk.type, tk.mods }; })
-				| std::ranges::to< std::vector >();
-			};
+		// @Note: Potentially returning a bit more than asked for since to simply we ignore character positions and just return all tokens between the first and last line inclusive.
+		// LSP semantic token requests allow for returning additional tokens.
+		auto const simple_range = lsp_boot::LineRange::from_start_and_end_inclusive(range.start.line, range.end.line);
 
-		// @todo: pending libcpp enumerate
-			
-		//auto tokens = content()
-		//	| std::views::split("\r\n"sv)
-		//	| std::views::transform(line_tokens)
-		//	| std::views::enumerate
-		//	| std::views::transform(to_tuples)
-		//	| std::views::join;
-
-		auto tokens = enumerate_workaround(content()
-			| std::views::split("\r\n"sv)
+		auto tokens = enumerated_lines_range(simple_range)
 			| std::views::transform(line_tokens)
-			)
-			| std::views::transform(to_tuples)
 			| std::views::join;
+
+		return lsp_boot::generate_semantic_token_deltas(tokens | std::ranges::to< std::vector >());
+	}
+
+	auto BuildfileDocument::handle(lsp_boot::lsp::requests::SemanticTokensFull const& msg) const -> lsp_boot::Server::RequestResult
+	{
+		// @todo: work out why VS specifically seems to send textDocument/semanticTokens/full endlessly with no interaction.
+
+		auto tokens = generate_semantic_tokens_for_range(entire_document_range());
 
 		auto result = boost::json::object{
 			// @todo: resultId for deltas: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#semanticTokensLegend
-			{ "data", lsp_boot::generate_semantic_token_deltas(tokens | std::ranges::to< std::vector >()) | std::ranges::to< boost::json::array >() },
+			{ "data", tokens | std::ranges::to< boost::json::array >() },
+		};
+		return result;
+	}
+
+	auto BuildfileDocument::handle(lsp_boot::lsp::requests::SemanticTokensRange const& msg) const -> lsp_boot::Server::RequestResult
+	{
+		auto&& params = msg.params();
+
+		auto const range = lsp_boot::lsp::Range::from_json(params.at(lsp_boot::lsp::keys::range));
+		auto tokens = generate_semantic_tokens_for_range(range);
+
+		auto result = boost::json::object{
+			// @todo: resultId for deltas: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#semanticTokensLegend
+			{ "data", tokens | std::ranges::to< boost::json::array >() },
 		};
 		return result;
 	}

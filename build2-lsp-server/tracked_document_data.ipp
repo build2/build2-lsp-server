@@ -7,15 +7,33 @@ import std;
 #include <utility>
 #include <string>
 #include <string_view>
+#include <vector>
+#include <ranges>
 #endif
 
 export module tracked_document_data;
+
+import utility;
+
+import lsp_boot;
+import lsp_boot.utility;
 
 namespace b2lsp
 {
 	export struct TrackedDocumentData
 	{
-		TrackedDocumentData(std::string content) : content_{ std::move(content) }
+		static auto derive_lines(std::string_view const text)
+		{
+			using namespace std::string_view_literals;
+
+			return text
+				| std::views::split("\r\n"sv)
+				| std::ranges::to< std::vector< std::string > >();
+		}
+
+		TrackedDocumentData(std::string content)
+			: content_{ std::move(content) }
+			, lines_{ derive_lines(content_) }
 		{
 		}
 
@@ -24,11 +42,43 @@ namespace b2lsp
 			return content_;
 		}
 
+		auto lines() const -> std::span< std::string const >
+		{
+			return lines_;
+		}
+
+		auto lines_range(lsp_boot::LineRange const line_range) const
+		{
+			return lines_
+				| std::views::drop(line_range.start())
+				| std::views::take(line_range.size());
+		}
+
+		auto enumerated_lines_range(lsp_boot::LineRange const line_range) const
+		{
+			// @todo: pending libcpp enumerate
+			return //lines_
+				//| std::views::enumerate
+				enumerate_workaround(lines_)
+				| std::views::drop(line_range.start())
+				| std::views::take(line_range.size());
+		}
+
+		auto entire_document_range() const
+		{
+			return lsp_boot::lsp::Range{
+				lsp_boot::lsp::Location(0, 0),
+				!lines().empty() ? lsp_boot::lsp::Location(lines().size() - 1, lines().back().size()) : lsp_boot::lsp::Location(0, 0),
+			};
+		}
+
 		auto update_content(std::string new_content) -> void
 		{
 			content_ = std::move(new_content);
+			lines_ = derive_lines(content_);
 		}
 
 		std::string content_;
+		std::vector< std::string > lines_;
 	};
 }

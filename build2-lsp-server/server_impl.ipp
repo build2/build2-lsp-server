@@ -36,7 +36,8 @@ namespace b2lsp
 
 		// @NOTE: These are invoked by the thread processing the pending input queue (requests and notifications sent from the client and queued by the connection).
 		auto operator() (lsp_boot::lsp::requests::Initialize&& msg) -> RequestResult;
-		auto operator() (lsp_boot::lsp::requests::SemanticTokens&& msg) -> RequestResult;
+		auto operator() (lsp_boot::lsp::requests::SemanticTokensFull&& msg) -> RequestResult;
+		auto operator() (lsp_boot::lsp::requests::SemanticTokensRange&& msg) -> RequestResult;
 
 		auto operator() (lsp_boot::lsp::notifications::DidOpenTextDocument&& msg) -> NotificationResult;
 		auto operator() (lsp_boot::lsp::notifications::DidChangeTextDocument&& msg) -> NotificationResult;

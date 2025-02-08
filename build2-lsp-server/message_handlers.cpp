@@ -128,7 +128,7 @@ namespace b2lsp
 		return result_ok;
 	}
 
-	auto ServerImplementation::operator() (requests::SemanticTokens&& msg) -> RequestResult
+	auto ServerImplementation::operator() (requests::SemanticTokensFull&& msg) -> RequestResult
 	{
 		auto&& params = msg.params();
 
@@ -142,4 +142,19 @@ namespace b2lsp
 		auto const& doc = doc_iter->second;
 		return invoke_on_document(doc, msg);
 	}	
+
+	auto ServerImplementation::operator() (requests::SemanticTokensRange&& msg) -> RequestResult
+	{
+		auto&& params = msg.params();
+
+		auto const& text_doc_id = boost::json::value_to< std::string >(params.at(lsp::keys::text_document).at(lsp::keys::uri));
+		auto const doc_iter = documents_.find(text_doc_id);
+		if (doc_iter == documents_.end())
+		{
+			return temp_fail;
+		}
+
+		auto const& doc = doc_iter->second;
+		return invoke_on_document(doc, msg);
+	}
 }
