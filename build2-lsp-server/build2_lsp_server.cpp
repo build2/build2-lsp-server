@@ -60,8 +60,18 @@ int main(int argc, char* argv[])
 	auto server = lsp_boot::Server(input_queue, output_queue, server_impl_init);
 	auto server_thread = Thread([&] {
 		server.run();
+		// @TODO: although currently behaving as desired, we probably want a server exit to force the connection to close down to handle
+		// corner cases/weird client behaviour.
+		// We can move this server init below the connection stuff without issue, so should be easy enough.
 		});
 
 	auto connection = lsp_boot::StreamConnection(input_queue, output_queue, std::cin, std::cout, std::cerr);
-	return connection.listen();
+	auto result = connection.listen();
+
+	// @NOTE: Visual Studio appears not to send an LSP exit notification after the shutdown request, in the case that the IDE is closed
+	// (though it does correctly send both when something causes the LSP server to be stopped/restarted).
+	// So we need to ensure the server is stopped in order to be able to join all threads and exit.
+	server.request_shutdown();
+
+	return result;
 }
