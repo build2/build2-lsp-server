@@ -21,6 +21,7 @@ import lang.common.semantic_tokens;
 import utility;
 
 import lsp_boot;
+import lsp_boot.utility;
 import lsp_boot.semantic_tokens;
 import lsp_boot.ext_mod_wrap.boost.json;
 
