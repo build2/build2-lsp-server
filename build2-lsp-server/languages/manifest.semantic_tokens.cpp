@@ -60,7 +60,30 @@ namespace b2lsp
 		// LSP semantic token requests allow for returning additional tokens.
 		auto const simple_range = lsp_boot::LineRange::from_start_and_end_inclusive(range.start.line, range.end.line);
 
+		auto const line_escape_chunker = [](auto const& prior, auto const& next) {
+			auto const& [_, prior_line] = prior;
+			return prior_line.ends_with("\\") && !prior_line.ends_with("\\\\");
+			};
+		auto const escaped_chunk_joiner = [](std::ranges::sized_range auto&& lines) {
+			auto num = std::ranges::size(lines);
+			auto const last = num > 0 ? (num - 1) : 0;
+			auto const consolidate = [last](auto const line) {
+				auto const& [idx_in_chunk, line_pr] = line;
+				auto const& [line_idx, line_str] = line_pr;
+				return idx_in_chunk == last ? line_str : line_str.substr(0, line_str.length() - 1);
+				};
+			// String view of the consolidated line as per the manifest structure, with the newline escapes removed.
+			auto view = enumerate_workaround(lines)
+				| std::views::transform(consolidate)
+				| std::views::join;
+			// Indices into view marking the location of the escaped line breaks, to allow for mapping back to raw line/column locations.
+			auto subline_indices = ;
+			return std::pair{ view, subline_indices };
+			};
+
 		auto tokens = enumerated_lines_range(simple_range)
+			| std::views::chunk_by(line_ecape_chunker)
+			| std::views::transform(escaped_chunk_joiner)
 			| std::views::transform(line_tokens)
 			| std::views::join;
 
