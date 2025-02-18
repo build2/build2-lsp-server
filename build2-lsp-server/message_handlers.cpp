@@ -14,6 +14,7 @@ import std;
 #include <tuple>
 #include <optional>
 #include <variant>
+#include <expected>
 #include <string>
 #include <span>
 #include <ranges>
@@ -50,7 +51,9 @@ namespace b2lsp
 				} },
 		};
 
-		return result;
+		return RequestSuccessResult{
+			result
+		};
 	}
 
 	auto ServerImplementation::operator() (notifications::DidOpenTextDocument&& msg) -> NotificationResult
@@ -64,18 +67,18 @@ namespace b2lsp
 		if (doc_iter != documents_.end())
 		{
 			// already exists
-			return temp_fail;
+			return std::unexpected(ResponseError{});
 		}
 
 		auto text = boost::json::value_to< lsp::DocumentContent >(text_doc.at(lsp::keys::text));
 		if (auto doc = create_tracked_document(uri, std::move(text)); doc.has_value())
 		{
 			documents_.try_emplace(uri, std::move(*doc));
-			return result_ok;
+			return NotificationSuccessResult{};
 		}
 		else
 		{
-			return temp_fail;
+			return std::unexpected(ResponseError{});
 		}
 	}
 
@@ -92,7 +95,7 @@ namespace b2lsp
 		if (doc_iter == documents_.end())
 		{
 			// not tracked
-			return temp_fail;
+			return std::unexpected(ResponseError{});
 		}
 
 		auto& doc = doc_iter->second;
@@ -110,7 +113,7 @@ namespace b2lsp
 			update_document(doc, boost::json::value_to< std::string >(change.at(lsp::keys::text)));
 		}
 
-		return result_ok;
+		return NotificationSuccessResult{};
 	}
 
 	auto ServerImplementation::operator() (notifications::DidCloseTextDocument&& msg) -> NotificationResult
@@ -125,11 +128,11 @@ namespace b2lsp
 		if (doc_iter == documents_.end())
 		{
 			// not tracked
-			return temp_fail;
+			return std::unexpected(ResponseError{});
 		}
 
 		documents_.erase(doc_iter);
-		return result_ok;
+		return NotificationSuccessResult{};
 	}
 
 	auto ServerImplementation::operator() (requests::SemanticTokensFull&& msg) -> RequestResult
@@ -140,7 +143,7 @@ namespace b2lsp
 		auto const doc_iter = documents_.find(text_doc_id);
 		if (doc_iter == documents_.end())
 		{
-			return temp_fail;
+			return std::unexpected(ResponseError{});
 		}
 
 		auto const& doc = doc_iter->second;
@@ -155,7 +158,7 @@ namespace b2lsp
 		auto const doc_iter = documents_.find(text_doc_id);
 		if (doc_iter == documents_.end())
 		{
-			return temp_fail;
+			return std::unexpected(ResponseError{});
 		}
 
 		auto const& doc = doc_iter->second;

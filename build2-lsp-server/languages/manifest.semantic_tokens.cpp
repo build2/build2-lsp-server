@@ -75,7 +75,9 @@ namespace b2lsp
 			// @todo: resultId for deltas: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#semanticTokensLegend
 			{ "data", tokens | std::ranges::to< boost::json::array >() },
 		};
-		return result;
+		return lsp_boot::Server::RequestSuccessResult{
+			result
+		};
 	}
 
 	auto ManifestDocument::handle(lsp_boot::lsp::requests::SemanticTokensRange const& msg) const -> lsp_boot::Server::RequestResult
@@ -89,6 +91,8 @@ namespace b2lsp
 			// @todo: resultId for deltas: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#semanticTokensLegend
 			{ "data", tokens | std::ranges::to< boost::json::array >() },
 		};
-		return result;
+		return lsp_boot::Server::RequestSuccessResult{
+			result
+		};
 	}
 }

@@ -4,7 +4,7 @@ module;
 #if !defined(BUILD2_LSP_SERVER_ENABLE_IMPORT_STD)
 #include <cstddef>
 #include <cstdint>
-#include <string_view>
+#include <vector>
 #endif
 
 export module lang.common.semantic_tokens;

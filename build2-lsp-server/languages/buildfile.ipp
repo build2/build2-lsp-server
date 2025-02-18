@@ -3,6 +3,7 @@ module;
 
 #if !defined(BUILD2_LSP_SERVER_ENABLE_IMPORT_STD)
 #include <string_view>
+#include <vector>
 #endif
 
 export module lang.buildfile;

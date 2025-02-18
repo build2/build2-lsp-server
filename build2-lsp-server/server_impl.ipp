@@ -29,10 +29,10 @@ namespace b2lsp
 		using Req = lsp_boot::lsp::requests::Kinds;
 
 		using RequestResult = lsp_boot::Server::RequestResult;
+		using RequestSuccessResult = lsp_boot::Server::RequestSuccessResult;
 		using NotificationResult = lsp_boot::Server::NotificationResult;
-
-		static constexpr auto result_ok = nullptr;
-		static constexpr auto temp_fail = nullptr;
+		using NotificationSuccessResult = lsp_boot::Server::NotificationSuccessResult;
+		using ResponseError = lsp_boot::Server::ResponseError;
 
 		// @NOTE: These are invoked by the thread processing the pending input queue (requests and notifications sent from the client and queued by the connection).
 		auto operator() (lsp_boot::lsp::requests::Initialize&& msg) -> RequestResult;
