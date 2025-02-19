@@ -9,5 +9,6 @@ url: https://example.org/build2-lsp-server
 email: cjangus@gmail.com
 depends: * build2 >= 0.16.0
 depends: * bpkg >= 0.16.0
-depends: liblsp-boot
-depends: libboost-json
+
+depends: liblsp-boot >= 0.1.1
+depends: libboost-json >= 1.78

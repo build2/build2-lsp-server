@@ -53,8 +53,8 @@ int main(int argc, char* argv[])
 	auto input_queue = lsp_boot::PendingInputQueue{};
 	auto output_queue = lsp_boot::OutputQueue{};
 
-	auto server_impl_init = [](auto&& send_notify) {
-		return std::make_unique< ServerImplementation >(send_notify);
+	auto const server_impl_init = [](lsp_boot::ServerImplAPI& api) {
+		return std::make_unique< ServerImplementation >(api);
 		};
 
 	auto server = lsp_boot::Server(input_queue, output_queue, server_impl_init);

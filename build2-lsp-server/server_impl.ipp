@@ -18,8 +18,7 @@ namespace b2lsp
 {
 	export struct ServerImplementation
 	{
-		template < std::regular_invocable< lsp_boot::lsp::RawMessage&& > SendNotify >
-		ServerImplementation(SendNotify&& send_notify) : send_notify_{ send_notify }
+		ServerImplementation(lsp_boot::ServerImplAPI& internal_api) : internal_api_{ internal_api }
 		{
 		}
 
@@ -45,14 +44,14 @@ namespace b2lsp
 
 		auto notify_client(lsp_boot::lsp::RawMessage&& msg) const -> void
 		{
-			send_notify_(std::move(msg));
+			internal_api_.send_notification(std::move(msg));
 		}
 
 		auto pump() -> void;
 
 		using DocumentMap = std::unordered_map< lsp_boot::lsp::DocumentURI, TrackedDocument >;
 
-		std::function< void(lsp_boot::lsp::RawMessage&&) > send_notify_;
+		lsp_boot::ServerImplAPI& internal_api_;
 		DocumentMap documents_;
 	};
 }
