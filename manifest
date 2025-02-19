@@ -10,5 +10,5 @@ email: cjangus@gmail.com
 depends: * build2 >= 0.16.0
 depends: * bpkg >= 0.16.0
 
-depends: liblsp-boot >= 0.1.1
+depends: liblsp-boot >= 0.1.2
 depends: libboost-json >= 1.78
