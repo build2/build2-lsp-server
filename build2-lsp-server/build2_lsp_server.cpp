@@ -6,6 +6,8 @@
 #endif
 
 #if !defined(BUILD2_LSP_SERVER_ENABLE_IMPORT_STD)
+#include <utility>
+#include <iterator>
 #include <memory>
 #include <iostream>
 #include <thread>
@@ -53,13 +55,23 @@ int main(int argc, char* argv[])
 	auto input_queue = lsp_boot::PendingInputQueue{};
 	auto output_queue = lsp_boot::OutputQueue{};
 
-	auto const server_impl_init = [](lsp_boot::ServerImplAPI& api) {
-		return std::make_unique< ServerImplementation >(api);
+	// @todo: relationships bwtween base Server class, server impl, and logger are now a mess.
+	// issue is that the impl is both given an abstracted interface for doing logging, but now also is responsible for reconfiguring the logger
+	// since it's the impl that processes the configuration change messages from the client. so the impl needs some more direct access to the logger
+	// on top of the abstracted logging function...
+
+	auto logger_config = std::make_shared< LoggerConfig >();
+
+	auto const logger = [logger_config](lsp_boot::LogOutputCallbackView callback) {
+		if (logger_config->enabled)
+		{
+			std::move(callback)(std::ostream_iterator< char >(std::cerr));
+			std::cerr << std::endl;
+		}
 		};
 
-	auto const logger = [](lsp_boot::LogOutputCallbackView callback) {
-		std::move(callback)(std::ostream_iterator< char >(std::cerr));
-		std::cerr << std::endl;
+	auto const server_impl_init = [logger_config](lsp_boot::ServerImplAPI& api) {
+		return std::make_unique< ServerImplementation >(api, logger_config);
 		};
 
 	auto server = lsp_boot::Server(

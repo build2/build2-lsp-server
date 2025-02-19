@@ -7,18 +7,27 @@ import std;
 #include <concepts>
 #include <utility>
 #include <functional>
+#include <memory>
 #endif
 
 export module server_impl;
 
 import tracked_document;
 import lsp_boot;
+import lsp_boot.ext_mod_wrap.boost.json;
 
 namespace b2lsp
 {
+	using Configuration = boost::json::object;
+
+	export struct LoggerConfig
+	{
+		bool enabled = false;
+	};
+
 	export struct ServerImplementation
 	{
-		ServerImplementation(lsp_boot::ServerImplAPI& internal_api) : internal_api_{ internal_api }
+		ServerImplementation(lsp_boot::ServerImplAPI& internal_api, std::shared_ptr< LoggerConfig > logger_config) : internal_api_{ internal_api }, logger_config_{ logger_config }
 		{
 		}
 
@@ -38,6 +47,7 @@ namespace b2lsp
 		auto operator() (lsp_boot::lsp::requests::SemanticTokensFull&& msg) -> RequestResult;
 		auto operator() (lsp_boot::lsp::requests::SemanticTokensRange&& msg) -> RequestResult;
 
+		auto operator() (lsp_boot::lsp::notifications::DidChangeConfiguration&& msg) -> NotificationResult;
 		auto operator() (lsp_boot::lsp::notifications::DidOpenTextDocument&& msg) -> NotificationResult;
 		auto operator() (lsp_boot::lsp::notifications::DidChangeTextDocument&& msg) -> NotificationResult;
 		auto operator() (lsp_boot::lsp::notifications::DidCloseTextDocument&& msg) -> NotificationResult;
@@ -49,9 +59,13 @@ namespace b2lsp
 
 		auto pump() -> void;
 
+		auto apply_configuration_update(Configuration const&) -> void;
+
 		using DocumentMap = std::unordered_map< lsp_boot::lsp::DocumentURI, TrackedDocument >;
 
 		lsp_boot::ServerImplAPI& internal_api_;
+		Configuration configuration_;
+		std::shared_ptr< LoggerConfig > logger_config_;
 		DocumentMap documents_;
 	};
 }

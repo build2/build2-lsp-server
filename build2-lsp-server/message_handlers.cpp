@@ -56,6 +56,24 @@ namespace b2lsp
 		};
 	}
 
+	auto ServerImplementation::operator() (notifications::DidChangeConfiguration&& msg) -> NotificationResult
+	{
+		// @todo: should also trigger this logic from initialize handler if starting config is given
+
+		auto&& params = msg.params().as_object();
+		if (auto const settings_iter = params.find("settings"); settings_iter != params.end() && settings_iter->value().is_object())
+		{
+			auto&& settings_obj = settings_iter->value().as_object();
+			if (auto const build2_iter = settings_obj.find("build2"); build2_iter != settings_obj.end() && build2_iter->value().is_object())
+			{
+				auto&& updated_settings = build2_iter->value().as_object();
+				apply_configuration_update(updated_settings);
+			}
+		}
+
+		return NotificationSuccessResult{};
+	}
+
 	auto ServerImplementation::operator() (notifications::DidOpenTextDocument&& msg) -> NotificationResult
 	{
 		auto&& params = msg.params();
