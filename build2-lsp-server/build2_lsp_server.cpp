@@ -57,7 +57,16 @@ int main(int argc, char* argv[])
 		return std::make_unique< ServerImplementation >(api);
 		};
 
-	auto server = lsp_boot::Server(input_queue, output_queue, server_impl_init);
+	auto const logger = [](lsp_boot::LogOutputCallbackView callback) {
+		std::move(callback)(std::ostream_iterator< char >(std::cerr));
+		std::cerr << std::endl;
+		};
+
+	auto server = lsp_boot::Server(
+		input_queue,
+		output_queue,
+		server_impl_init,
+		logger);
 	auto server_thread = Thread([&] {
 		server.run();
 		// @TODO: although currently behaving as desired, we probably want a server exit to force the connection to close down to handle
