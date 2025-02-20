@@ -26,9 +26,15 @@ namespace b2lsp
 		{
 			using namespace std::string_view_literals;
 
-			return text
-				| std::views::split("\r\n"sv)
-				| std::ranges::to< std::vector< std::string > >();
+			std::vector< std::string > lines;
+			for (auto str = text; !str.empty(); )
+			{
+				auto const nl = str.find('\n');
+				auto const line_end = nl == std::string_view::npos || nl == 0 || str[nl - 1] != '\r' ? nl : (nl - 1);
+				lines.emplace_back(str.substr(0, line_end));
+				str = nl == std::string_view::npos ? "" : str.substr(nl + 1);
+			}
+			return lines;
 		}
 
 		TrackedDocumentData(std::string content)
