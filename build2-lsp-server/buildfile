@@ -1,5 +1,5 @@
 libs =
-import libs += liblsp-boot%lib{lsp-boot}
+import libs += liblsp-boot%liba{lsp-boot}
 
 exe{build2-lsp-server}: {hxx mxx cxx}{**} $libs testscript
 
