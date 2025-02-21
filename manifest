@@ -2,13 +2,21 @@
 name: build2-lsp-server
 version: 0.1.0-a.0.z
 language: c++
-summary: build2 LSP server
+summary: LSP server for build2 DSLs
 license: MIT
 description-file: README.md
-url: https://example.org/build2-lsp-server
+url: https://github.com/build2/build2-lsp-server
 email: cjangus@gmail.com
-depends: * build2 >= 0.16.0
-depends: * bpkg >= 0.16.0
+build-error-email: cjangus@gmail.com
+depends: * build2 >= 0.17.0
+depends: * bpkg >= 0.17.0
 
-depends: liblsp-boot >= 0.1.3
+depends: liblsp-boot >= 0.1.4
 depends: libboost-json >= 1.78
+
+builds: clang-18+
+build-include: freebsd_14-clang_18
+build-include: linux_debian_12-clang_18_libc++
+#build-include: linux_debian_12-clang_18 ; libstdc++ missing some used library features
+#build-include: windows_10-clang_18_llvm_msvc_17.10 ; 17.10 library insufficient
+build-exclude: ** ; Modules use currently precludes the majority of configurations
